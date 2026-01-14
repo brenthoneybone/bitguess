@@ -1,0 +1,12 @@
+version = 0.1
+
+[default.deploy.parameters]
+stack_name = "bitguess-frontend"
+resolve_s3 = true
+s3_prefix = "bitguess-frontend"
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "ProjectName=\"bitguess-frontend\""
+image_repositories = []
+
+[default.global.parameters]
+region = "eu-central-1"

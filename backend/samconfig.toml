@@ -1,0 +1,12 @@
+version = 0.1
+
+[default.deploy.parameters]
+stack_name = "bitguess-backend"
+s3_bucket = "bitguess-deployment-artifacts-968184801288"
+s3_prefix = "bitguess-backend"
+capabilities = "CAPABILITY_IAM"
+image_repositories = []
+confirm_changeset = false
+
+[default.global.parameters]
+region = "eu-central-1"

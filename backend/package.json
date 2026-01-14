@@ -1,0 +1,37 @@
+{
+  "name": "backend",
+  "version": "0.0.1",
+  "description": "",
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "scripts": {
+    "dev": "concurrently \"npm run build:watch\" \"AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_REGION=eu-central-1 sam local start-api -t template.yaml --host 0.0.0.0 --docker-network backend_default --env-vars env.local.json --warm-containers LAZY\"",
+    "dev:worker": "AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_REGION=eu-central-1 SQS_ENDPOINT=http://localhost:4566 DYNAMODB_ENDPOINT=http://localhost:8000 QUEUE_URL=http://localhost:4566/queue/eu-central-1/000000000000/guess-resolver PLAYERS_TABLE=Players GUESSES_TABLE=Guesses npx tsx src/local/sqs-worker.ts",
+    "lint": "prettier --ignore-path ../.prettierignore --check . && eslint --config ../eslint.config.js .",
+    "format": "prettier --ignore-path ../.prettierignore --write .",
+    "deploy": "npm run build && sam deploy -t template.yaml --no-fail-on-empty-changeset --parameter-overrides AllowedOrigins=\"https://d11smuquft4ec1.cloudfront.net\"",
+    "teardown": "sam delete",
+    "build": "mkdir -p dist/lambdas && cp ../api/openapi.yaml dist/lambdas/openapi.yaml && esbuild src/lambdas/*.ts --bundle --platform=node --target=node20 --outdir=dist/lambdas --format=cjs --sourcemap",
+    "build:watch": "mkdir -p dist/lambdas && cp ../api/openapi.yaml dist/lambdas/openapi.yaml && esbuild src/lambdas/*.ts --bundle --platform=node --target=node20 --outdir=dist/lambdas --format=cjs --sourcemap --watch",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.966.0",
+    "@aws-sdk/client-sqs": "^3.966.0",
+    "@aws-sdk/lib-dynamodb": "^3.966.0",
+    "openapi-backend": "^5.15.0"
+  },
+  "devDependencies": {
+    "@bitguess/api-types": "*",
+    "@bitguess/config": "*",
+    "@types/aws-lambda": "^8.10.159",
+    "@vitest/coverage-v8": "^4.0.17",
+    "concurrently": "^9.2.1",
+    "esbuild": "^0.27.2",
+    "vitest": "^4.0.17"
+  }
+}

@@ -1,0 +1,141 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: bitguess-backend
+
+Parameters:
+  AllowedOrigins:
+    Type: CommaDelimitedList
+    Description: Comma-separated list of allowed origins for CORS
+    Default: 'http://localhost:5173'
+
+Globals:
+  Function:
+    Runtime: nodejs20.x
+    Architectures: [x86_64]
+    Timeout: 15
+    MemorySize: 256
+    Environment:
+      Variables:
+        PLAYERS_TABLE: !Ref PlayersTable
+        GUESSES_TABLE: !Ref GuessesTable
+
+Resources:
+  ### DYNAMODB TABLES ###
+  PlayersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+
+  GuessesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+
+  ### SQS QUEUES ###
+  GuessQueueDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      # 14 days
+      MessageRetentionPeriod: 1209600
+
+  GuessQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      # Recommended: >= 6x Lambda timeout (15s) to reduce duplicate processing
+      VisibilityTimeout: 90
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt GuessQueueDLQ.Arn
+        maxReceiveCount: 5
+
+  ### HTTP API ###
+  HttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: prod
+      CorsConfiguration:
+        AllowOrigins: !Ref AllowedOrigins
+        AllowMethods:
+          - GET
+          - POST
+          - OPTIONS
+        AllowHeaders:
+          - content-type
+
+  ### API LAMBDA ###
+  HttpFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: dist/lambdas/http-api.handler
+      Environment:
+        Variables:
+          QUEUE_URL: !Ref GuessQueue
+      Policies:
+        - SQSSendMessagePolicy:
+            QueueName: !GetAtt GuessQueue.QueueName
+        - Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:GetItem
+                - dynamodb:PutItem
+                - dynamodb:UpdateItem
+                - dynamodb:DeleteItem
+                - dynamodb:Query
+                - dynamodb:Scan
+              Resource:
+                - !GetAtt PlayersTable.Arn
+                - !Sub '${PlayersTable.Arn}/index/*'
+                - !GetAtt GuessesTable.Arn
+                - !Sub '${GuessesTable.Arn}/index/*'
+      Events:
+        ApiProxy:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /{proxy+}
+            Method: ANY
+
+  ### RESOLVER LAMBDA ###
+  ResolverFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: dist/lambdas/guess-resolver.handler
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:GetItem
+                - dynamodb:PutItem
+                - dynamodb:UpdateItem
+                - dynamodb:DeleteItem
+                - dynamodb:Query
+                - dynamodb:Scan
+              Resource:
+                - !GetAtt PlayersTable.Arn
+                - !Sub '${PlayersTable.Arn}/index/*'
+                - !GetAtt GuessesTable.Arn
+                - !Sub '${GuessesTable.Arn}/index/*'
+      Events:
+        GuessQueueEvent:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt GuessQueue.Arn
+            BatchSize: 1
+
+Outputs:
+  ApiUrl:
+    Description: HTTP API endpoint
+    Value: !Sub 'https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com/prod'

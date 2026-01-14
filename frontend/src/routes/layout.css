@@ -1,0 +1,21 @@
+@import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;700&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Prompt:wght@300;400;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
+@import 'tailwindcss';
+
+@theme {
+  --font-main: 'Prompt', sans-serif;
+  --font-body: 'Barlow', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-icon: 'Material Symbols Outlined', sans-serif;
+}
+
+:root {
+  --color-1: #e409f9;
+  --color-2: #2a14f6;
+  --footer-color: #2a2a33;
+  --text-color: #ffffff;
+  --page-padding: 1rem;
+
+  @apply md:[--page-padding:2rem];
+  @apply xl:[--page-padding:4rem];
+}

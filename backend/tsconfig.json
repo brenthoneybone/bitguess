@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "allowJs": true,
+    "checkJs": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "strict": true,
+    "outDir": "./dist",
+    "baseUrl": ".",
+    "paths": {
+      "*": ["node_modules/*"],
+      "@bitguess/api-types": ["../packages/api-types/src/index.ts"],
+      "@bitguess/api-types/openapi": ["../packages/api-types/generated/openapi.d.ts"],
+      "@bitguess/config": ["../packages/config/src/index.ts"],
+      "$services/*": ["src/services/*"],
+      "$utils/*": ["src/utils/*"],
+      "$routes/*": ["src/routes/*"],
+      "$lambdas/*": ["src/lambdas/*"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", ".aws-sam"]
+}

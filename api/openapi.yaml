@@ -1,0 +1,172 @@
+openapi: 3.0.3
+info:
+  title: BitGuess API
+  version: 1.0.0
+
+paths:
+  /v1/players:
+    post:
+      operationId: createPlayer
+      responses:
+        '201':
+          description: Player created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Player'
+
+  /v1/players/{playerToken}:
+    get:
+      operationId: getPlayer
+      parameters:
+        - in: path
+          name: playerToken
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Player
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Player'
+
+  /v1/players/{playerToken}/guesses/{guessId}:
+    get:
+      operationId: getGuess
+      parameters:
+        - in: path
+          name: playerToken
+          required: true
+          schema: { type: string, format: uuid }
+        - in: path
+          name: guessId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Guess
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Guess'
+        '404':
+          description: Guess not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/players/{playerToken}/guesses:
+    post:
+      operationId: createGuess
+      parameters:
+        - in: path
+          name: playerToken
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGuessRequest'
+      responses:
+        '201':
+          description: Created guess
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Guess'
+        '409':
+          description: Player already has a pending guess
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PendingGuessConflict'
+
+components:
+  schemas:
+    Direction:
+      type: string
+      enum: [UP, DOWN]
+
+    GuessStatus:
+      type: string
+      enum: [PENDING, RESOLVED, VOID]
+
+    Player:
+      type: object
+      additionalProperties: false
+      required: [id, score, pendingGuessId]
+      properties:
+        id: { type: string, description: 'Unique identifier for the player' }
+        score: { type: number, description: 'Current score of the player' }
+        pendingGuessId:
+          type: string
+          nullable: true
+          description: 'ID of the active guess for the player, if any'
+
+    Guess:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          id,
+          playerId,
+          startValue,
+          direction,
+          createdAt,
+          resolveAfter,
+          resolvedAt,
+          status,
+          endValue,
+          delta,
+        ]
+      properties:
+        id: { type: string, description: 'Unique identifier for the guess' }
+        playerId: { type: string, description: 'ID of the player who made the guess' }
+        createdAt: { type: number, description: 'Epoch ms when guess was created' }
+        startValue: { type: number, description: 'Bitcoin price at creation time' }
+        direction:
+          $ref: '#/components/schemas/Direction'
+        resolveAfter: { type: number, description: 'Epoch ms when guess should resolve' }
+        resolvedAt:
+          type: number
+          nullable: true
+          description: 'Epoch ms when guess was actually resolved'
+        status:
+          $ref: '#/components/schemas/GuessStatus'
+        endValue:
+          type: number
+          nullable: true
+          description: 'Bitcoin price at resolution time'
+        delta:
+          description: 'Score change resulting from the guess (-1, 0, or 1)'
+          oneOf:
+            - type: integer
+              enum: [-1, 0, 1]
+            - type: 'null'
+
+    CreateGuessRequest:
+      type: object
+      additionalProperties: false
+      required: [direction]
+      properties:
+        direction:
+          $ref: '#/components/schemas/Direction'
+
+    PendingGuessConflict:
+      type: object
+      additionalProperties: false
+      required: [statusCode, pendingGuessId, message]
+      properties:
+        statusCode: { type: number, description: 'HTTP status code' }
+        pendingGuessId: { type: string, description: 'ID of the existing pending guess' }
+        message: { type: string, description: 'Error message details' }
+
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string, description: 'Error message description' }

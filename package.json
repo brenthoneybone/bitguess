@@ -1,0 +1,46 @@
+{
+  "name": "bitguess-monorepo",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "frontend",
+    "backend",
+    "packages/*"
+  ],
+  "scripts": {
+    "api:generate": "npm -w @bitguess/api-types run generate",
+    "frontend:dev": "npm -w frontend run dev",
+    "frontend:deploy": "npm -w frontend run deploy",
+    "frontend:deploy:infra": "npm -w frontend run deploy:infra",
+    "frontend:deploy:sync": "npm -w frontend run deploy:sync",
+    "frontend:test": "npm -w frontend run test",
+    "frontend:test:coverage": "npm -w frontend run test:coverage",
+    "backend:dev": "npm -w backend run dev",
+    "backend:worker": "npm -w backend run dev:worker",
+    "backend:docker:up": "npm -w backend run docker:up",
+    "backend:docker:down": "npm -w backend run docker:down",
+    "backend:build": "npm -w backend run build",
+    "backend:deploy": "npm -w backend run deploy",
+    "backend:teardown": "npm -w backend run teardown",
+    "backend:test": "npm -w backend run test",
+    "backend:test:coverage": "npm -w backend run test:coverage",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "deploy": "npm run backend:deploy && npm run frontend:deploy",
+    "test": "npm run -w backend test && npm run -w frontend test",
+    "test:coverage": "npm run -w backend test:coverage && npm run -w frontend test:coverage"
+  },
+  "devDependencies": {
+    "@eslint/compat": "^1.4.1",
+    "@eslint/js": "^9.39.2",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-svelte": "^3.14.0",
+    "globals": "^16.5.0",
+    "prettier": "^3.7.4",
+    "prettier-plugin-svelte": "^3.4.1",
+    "prettier-plugin-tailwindcss": "^0.7.2",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.52.0"
+  }
+}

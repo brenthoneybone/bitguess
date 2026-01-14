@@ -1,0 +1,16 @@
+{
+  "name": "@bitguess/api-types",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./openapi": "./generated/openapi.d.ts"
+  },
+  "devDependencies": {
+    "openapi-typescript": "^7.6.1",
+    "type-fest": "^4.41.0"
+  },
+  "scripts": {
+    "generate": "npx openapi-typescript ../../api/openapi.yaml -o generated/openapi.d.ts"
+  }
+}
